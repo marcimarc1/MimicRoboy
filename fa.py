@@ -12,7 +12,7 @@ import re
 from models.mtcnn.align_dlib import AlignDlib
 from models.mtcnn import detect_face
 from scipy import misc
-
+import csv
 
 align = AlignDlib('models/dlib/shape_predictor_68_face_landmarks.dat')
 detector = dlib.get_frontal_face_detector()
@@ -77,16 +77,19 @@ def draw_landmarks(image, points):
         cv2.circle(result, point, 3, (0, 255, 0), -1 )
     return result
 
+gesamt = []
 for i in range (10):
     camera = cv2.VideoCapture(0)
     return_value,frame = camera.read()
     camera.release()
     img = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-    plt.imshow(img)
-    plt.show()
+
 
     bbs, lm = detect_face_and_landmarks_mtcnn(img)
 
     aligned_face, lm = align_face_dlib(img, bbs[0], AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-    plt.imshow(draw_landmarks(img,lm))
-    plt.show()
+    gesamt.append(lm)
+with open('landmarks.csv','w') as csvfile:
+    writer = csv.writer(csvfile)
+    for i in gesamt:
+        writer.writerow(i)
