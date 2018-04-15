@@ -15,6 +15,13 @@ from scipy import misc
 #from ros_publisher import WebsocketROSPublisher
 import json
 #Web= WebsocketROSPublisher('192.168.91.1',9091)
+import socket
+
+TCP_IP = '127.0.0.1'
+TCP_PORT = 9091
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((TCP_IP, TCP_PORT))
+
 
 align = AlignDlib('models/dlib/shape_predictor_68_face_landmarks.dat')
 detector = dlib.get_frontal_face_detector()
@@ -131,13 +138,12 @@ for i in range (10):
     plt.imshow(draw_landmarks(aligned_face, lm[49:61]))
     plt.plot(upper_bezier_points[:,0],upper_bezier_points[:,1],'ro')
     move = roboy_trans(upper_bezier_points, 0.5, -30)
-    json.dump(upper_bezier_points)
-    json.dump(lower_bezier_points)
+    s.send(upper_bezier_points, lower_bezier_points)
     #Web.publish('roboy.communication_middleware/Trajectory')
     plt.show()
 
 
-
+s.close()
 #    gesamt.append(lm)
 # with open('landmarks.csv','w') as csvfile:
 #     writer = csv.writer(csvfile)
