@@ -12,7 +12,9 @@ import re
 from models.mtcnn.align_dlib import AlignDlib
 from models.mtcnn import detect_face
 from scipy import misc
-import csv
+#from ros_publisher import WebsocketROSPublisher
+import json
+#Web= WebsocketROSPublisher('192.168.91.1',9091)
 
 align = AlignDlib('models/dlib/shape_predictor_68_face_landmarks.dat')
 detector = dlib.get_frontal_face_detector()
@@ -126,10 +128,12 @@ for i in range (10):
     print(k)
     upper_bezier_points = beziertransformation(lm[49],lm[51], lm[53], lm[55])
     lower_bezier_points = beziertransformation(lm[49],lm[59], lm[57], lm[55])
-    #plt.imshow(draw_landmarks(aligned_face, lm))
+    plt.imshow(draw_landmarks(aligned_face, lm[49:61]))
     plt.plot(upper_bezier_points[:,0],upper_bezier_points[:,1],'ro')
     move = roboy_trans(upper_bezier_points, 0.5, -30)
-    plt.plot(move[:, 0], move[:, 1], 'bo')
+    json.dump(upper_bezier_points)
+    json.dump(lower_bezier_points)
+    #Web.publish('roboy.communication_middleware/Trajectory')
     plt.show()
 
 
