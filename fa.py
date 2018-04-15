@@ -77,6 +77,37 @@ def draw_landmarks(image, points):
         cv2.circle(result, point, 3, (0, 255, 0), -1 )
     return result
 
+
+# as proof: https://pomax.github.io/bezierinfo/
+
+from numpy import array, linalg, matrix
+from scipy.misc import comb as nOk
+Mtk = lambda n, t, k: t**(k)*(1-t)**(n-k)*nOk(n,k)
+bezierM = lambda ts: matrix([[Mtk(3,t,k) for k in range(4)] for t in ts])
+def lsqfit(points,M):
+    M_ = linalg.pinv(M)
+    return M_ * points
+
+
+def beziertransformation(a,b,c,d):
+    V = array
+    E, W, N, S = V(a), V(b), V(c), V(d)
+    cw = 0.1
+    ch = 0.1
+    cpb = V(a)
+    cpe = V(d)
+    xys = [cpb, cpb + ch * N + E * cw / 8, cpe + ch * N + E * cw / 8, cpe]
+
+    ts = V(range(11)) / 10
+    M = bezierM(ts)
+    points = M * xys  # produces the points on the bezier curve at t in ts
+    return lsqfit(points, M)
+
+def roboy_trans(mat,factor, c):
+    scale = factor*mat
+    moved = scale + c
+    return moved
+
 gesamt = []
 for i in range (10):
     camera = cv2.VideoCapture(0)
@@ -84,12 +115,27 @@ for i in range (10):
     camera.release()
     img = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 
-
+   # plt.imshow(img)
     bbs, lm = detect_face_and_landmarks_mtcnn(img)
 
     aligned_face, lm = align_face_dlib(img, bbs[0], AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
-    gesamt.append(lm)
-with open('landmarks.csv','w') as csvfile:
-    writer = csv.writer(csvfile)
-    for i in gesamt:
-        writer.writerow(i)
+    bbs, lm = detect_face_and_landmarks_mtcnn(aligned_face)
+    aligned_face, lm = align_face_dlib(aligned_face, bbs[0], AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
+    k = lm[49:55]
+    k = np.array(k)
+    print(k)
+    upper_bezier_points = beziertransformation(lm[49],lm[51], lm[53], lm[55])
+    lower_bezier_points = beziertransformation(lm[49],lm[59], lm[57], lm[55])
+    #plt.imshow(draw_landmarks(aligned_face, lm))
+    plt.plot(upper_bezier_points[:,0],upper_bezier_points[:,1],'ro')
+    move = roboy_trans(upper_bezier_points, 0.5, -30)
+    plt.plot(move[:, 0], move[:, 1], 'bo')
+    plt.show()
+
+
+
+#    gesamt.append(lm)
+# with open('landmarks.csv','w') as csvfile:
+#     writer = csv.writer(csvfile)
+#     for i in gesamt:
+#         writer.writerow(i)
